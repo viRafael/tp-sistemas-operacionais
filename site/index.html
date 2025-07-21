@@ -48,6 +48,64 @@
             margin-bottom: 30px;
         }
 
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-header .section-title {
+            margin-bottom: 0;
+        }
+
+        .btn-fullscreen {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-fullscreen:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .visualization-panel.fullscreen {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            z-index: 1000;
+            max-width: none;
+            width: calc(100% - 40px);
+            height: calc(100% - 40px);
+            overflow-y: auto;
+        }
+
+        .visualization-panel.fullscreen .panel-header {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1001;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Esconder o painel de controle quando expandido */
+        .main-content.fullscreen-mode .control-panel {
+            display: none;
+        }
+
+        .main-content.fullscreen-mode {
+            grid-template-columns: 1fr;
+        }
+
         .control-panel {
             background: white;
             border-radius: 15px;
@@ -497,14 +555,19 @@
                 </div>
             </div>
 
-            <div class="visualization-panel">
+        <div class="visualization-panel">
+            <div class="panel-header">
                 <h3 class="section-title">Resultados da Simulação</h3>
-                <div id="comparisonMode" class="comparison-mode" style="display: none;">
-                    <strong>🔄 Modo Comparação Ativado</strong><br>
-                    Comparando múltiplos algoritmos com as mesmas tarefas
-                </div>
-                <div id="results"></div>
+                <button class="btn-fullscreen" onclick="toggleFullscreen()" id="fullscreenBtn">
+                    🔍 Expandir
+                </button>
             </div>
+            <div id="comparisonMode" class="comparison-mode" style="display: none;">
+                <strong>🔄 Modo Comparação Ativado</strong><br>
+                Comparando múltiplos algoritmos com as mesmas tarefas
+            </div>
+            <div id="results"></div>
+        </div>
         </div>
 
         <div id="comparisonTable" class="comparison-table" style="display: none;">
@@ -1073,6 +1136,40 @@
             tableContent.innerHTML = tableHTML;
             comparisonTable.style.display = 'block';
         }
+
+        let isFullscreen = false;
+        function toggleFullscreen() {
+            const visualizationPanel = document.querySelector('.visualization-panel');
+            const mainContent = document.querySelector('.main-content');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            
+            isFullscreen = !isFullscreen;
+            
+            if (isFullscreen) {
+                visualizationPanel.classList.add('fullscreen');
+                mainContent.classList.add('fullscreen-mode');
+                fullscreenBtn.innerHTML = '🗙 Fechar';
+                fullscreenBtn.title = 'Sair do modo expandido';
+                
+                // Prevenir scroll do body quando expandido
+                document.body.style.overflow = 'hidden';
+            } else {
+                visualizationPanel.classList.remove('fullscreen');
+                mainContent.classList.remove('fullscreen-mode');
+                fullscreenBtn.innerHTML = '🔍 Expandir';
+                fullscreenBtn.title = 'Expandir visualização';
+                
+                // Restaurar scroll do body
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Fechar com ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isFullscreen) {
+                toggleFullscreen();
+            }
+        });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
