@@ -251,6 +251,7 @@
             border-radius: 8px;
             padding: 15px;
             overflow-x: auto;
+            /* Remover: height: 150px; */
         }
 
         .timeline-scale {
@@ -266,6 +267,15 @@
             border-right: 1px solid #e2e8f0;
             padding: 5px;
             min-width: 30px;
+        }
+
+        .timeline-container {
+            position: relative;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-x: auto;
+            height: 150px; /* Altura fixa para os 3 estados */
         }
 
         .timeline-bar {
@@ -302,10 +312,9 @@
             box-shadow: 0 3px 10px rgba(0,0,0,0.3);
         }
 
-        .task-a { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); }
-        .task-b { background: linear-gradient(135deg, #4ecdc4 0%, #26d0ce 100%); }
-        .task-c { background: linear-gradient(135deg, #45b7d1 0%, #2980b9 100%); }
-        .task-d { background: linear-gradient(135deg, #f9ca24 0%, #f0932b 100%); }
+        .task-a { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); } /* Verde para execução */
+        .task-b { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); } /* Azul para espera */
+        .task-c { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); } /* Laranja para sobrecarga */
 
         .algorithm-stats {
             display: grid;
@@ -782,6 +791,95 @@
             return queue;
         }
 
+        function createWaitTimeline(executionResults, maxTime) {
+            const periods = [];
+            let currentTime = 0;
+            
+            // Criar lista de todos os períodos ocupados
+            const occupiedPeriods = executionResults.map(exec => ({
+                start: exec.startTime,
+                end: exec.startTime + exec.duration
+            })).sort((a, b) => a.start - b.start);
+            
+            occupiedPeriods.forEach(period => {
+                // Adicionar espera antes deste período
+                if (period.start > currentTime) {
+                    periods.push({
+                        type: 'wait',
+                        start: currentTime,
+                        duration: period.start - currentTime
+                    });
+                }
+                
+                // Adicionar período ocupado (não-espera)
+                periods.push({
+                    type: 'execution',
+                    start: period.start,
+                    duration: period.end - period.start
+                });
+                
+                currentTime = Math.max(currentTime, period.end);
+            });
+            
+            // Adicionar espera final se necessário
+            if (currentTime < maxTime) {
+                periods.push({
+                    type: 'wait',
+                    start: currentTime,
+                    duration: maxTime - currentTime
+                });
+            }
+            
+            return periods;
+        }
+
+        function createOverheadTimeline(executionResults, maxTime) {
+            const periods = [];
+            let currentTime = 0;
+            
+            executionResults.forEach((execution, index) => {
+                // Período antes da execução
+                if (execution.startTime > currentTime) {
+                    const gapDuration = execution.startTime - currentTime;
+                    
+                    // Se o gap é exatamente 1, é sobrecarga
+                    if (gapDuration === 1 && index > 0) {
+                        periods.push({
+                            type: 'overhead',
+                            start: currentTime,
+                            duration: 1
+                        });
+                    } else if (gapDuration > 0) {
+                        periods.push({
+                            type: 'empty',
+                            start: currentTime,
+                            duration: gapDuration
+                        });
+                    }
+                }
+                
+                // Período da execução (não é sobrecarga)
+                periods.push({
+                    type: 'empty',
+                    start: execution.startTime,
+                    duration: execution.duration
+                });
+                
+                currentTime = execution.startTime + execution.duration;
+            });
+            
+            // Completar até o final
+            if (currentTime < maxTime) {
+                periods.push({
+                    type: 'empty',
+                    start: currentTime,
+                    duration: maxTime - currentTime
+                });
+            }
+            
+            return periods;
+        }
+
         function displayResults(results) {
             const resultsDiv = document.getElementById('results');
             const comparisonMode = document.getElementById('comparisonMode');
@@ -865,27 +963,52 @@
             if (maxTime > 20) html += `<div class="timeline-tick">...${maxTime}</div>`;
             html += '</div>';
             
-            // Task bars
-            const taskNames = [...new Set(tasks.map(t => t.name))];
-            taskNames.forEach((taskName, index) => {
+        // Estado bars - Execução, Espera, Sobrecarga
+            const stateTypes = ['Execução', 'Espera', 'Sobrecarga'];
+            const stateColors = ['task-a', 'task-b', 'task-c'];
 
-            const taskExecutions = executionResults.filter(r => r.taskName === taskName);
+            stateTypes.forEach((stateType, stateIndex) => {
                 html += '<div class="timeline-bar">';
-                html += `<div class="task-label">${taskName.substring(0, 8)}...</div>`;
+                html += `<div class="task-label">${stateType}</div>`;
                 
                 let currentPos = 0;
-                taskExecutions.forEach(execution => {
-                    // Add gap if needed
-                    if (execution.startTime > currentPos) {
-                        const gapWidth = ((execution.startTime - currentPos) / Math.max(maxTime, 20)) * 100;
-                        html += `<div style="width: ${gapWidth}%; height: 20px;"></div>`;
-                    }
-                    
-                    const width = (execution.duration / Math.max(maxTime, 20)) * 100;
-                    const colorClass = taskColors[index % taskColors.length];
-                    html += `<div class="task-execution ${colorClass}" style="width: ${width}%;">${execution.duration}s</div>`;
-                    currentPos = execution.startTime + execution.duration;
-                });
+                
+                if (stateType === 'Execução') {
+                    // Mostrar períodos de execução
+                    executionResults.forEach(execution => {
+                        // Add gap if needed (períodos de não-execução)
+                        if (execution.startTime > currentPos) {
+                            const gapWidth = ((execution.startTime - currentPos) / Math.max(maxTime, 20)) * 100;
+                            html += `<div style="width: ${gapWidth}%; height: 20px;"></div>`;
+                        }
+                        
+                        const width = (execution.duration / Math.max(maxTime, 20)) * 100;
+                        html += `<div class="task-execution ${stateColors[0]}" style="width: ${width}%;">${execution.taskName.substring(0, 3)}</div>`;
+                        currentPos = execution.startTime + execution.duration;
+                    });
+                } else if (stateType === 'Espera') {
+                    // Mostrar períodos de espera (inverso da execução)
+                    const allPeriods = createWaitTimeline(executionResults, maxTime);
+                    allPeriods.forEach(period => {
+                        const width = (period.duration / Math.max(maxTime, 20)) * 100;
+                        if (period.type === 'wait') {
+                            html += `<div class="task-execution ${stateColors[1]}" style="width: ${width}%;">Espera</div>`;
+                        } else {
+                            html += `<div style="width: ${width}%; height: 20px;"></div>`;
+                        }
+                    });
+                } else if (stateType === 'Sobrecarga') {
+                    // Mostrar períodos de sobrecarga
+                    const overheadPeriods = createOverheadTimeline(executionResults, maxTime);
+                    overheadPeriods.forEach(period => {
+                        const width = (period.duration / Math.max(maxTime, 20)) * 100;
+                        if (period.type === 'overhead') {
+                            html += `<div class="task-execution ${stateColors[2]}" style="width: ${width}%;">CS</div>`;
+                        } else {
+                            html += `<div style="width: ${width}%; height: 20px;"></div>`;
+                        }
+                    });
+                }
                 
                 html += '</div>';
             });
