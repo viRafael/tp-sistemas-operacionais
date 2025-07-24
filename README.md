@@ -18,21 +18,17 @@ site/         # Código do site para simulação e comparação dos algoritmos (
 
 ## Como Executar o Simulador
 
-### 1. Executando o Site
-
-Abra o arquivo [`site/index.html`](site/index.html) em seu navegador. Não é necessário servidor, basta abrir o arquivo diretamente.
-
-### 2. Executando o Executável
+### 1. Executando o Executável
 
 #### **Windows**
 
-1. Baixe o arquivo `SimuladorCAV.exe` gerado na pasta `dist/` após a execução do script de build.
+1. Baixe o arquivo `SimuladorCAV_Win.exe'.
 2. Dê um duplo clique no arquivo para abrir a interface gráfica.
 3. Não é necessário instalar dependências.
 
 #### **Linux**
 
-1. Baixe o arquivo `SimuladorCAV` gerado na pasta `dist/` após a execução do script de build.
+1. Baixe o arquivo `SimuladorCAV`.
 2. Torne o arquivo executável com o comando:
    ```sh
    chmod +x SimuladorCAV
