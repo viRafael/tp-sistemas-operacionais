@@ -1,0 +1,18 @@
+# Ambientes virtuais
+venv/
+.env/
+
+# Pastas do PyInstaller
+build/
+__pycache__/
+
+# Arquivos temporários
+*.pyc
+*.pyo
+*.log
+
+# Config VS Code (opcional)
+.vscode/
+
+# Config 
+*.spec
