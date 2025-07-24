@@ -52,7 +52,7 @@ Desenvolvido para a disciplina Sistemas Operacionais 2025.1
 
 ## Equipe Responsavel: 
 
-#### Rafael Viera
-#### Samuel Costa
-#### Thales
-#### Pedro
+#### Rafael Rocha Moura Viera
+#### Samuel Costa Sales Da Silveira
+#### Thales Léo de Almeida Souza
+#### Pedro Luiz Cabral e Silva
