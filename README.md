@@ -9,12 +9,10 @@ Este repositório contém o trabalho prático da disciplina de **Sistemas Operac
 ```
 algoritmo/    # Implementação dos algoritmos de escalonamento em Python
 executavel/   # Scripts para gerar e rodar o executável da interface gráfica
-site/         # Código do site para simulação e comparação dos algoritmos (HTML, JS, CSS)
 ```
 
 - **algoritmo/**: Contém a base dos escalonadores e as implementações dos algoritmos (FIFO, Round Robin, Prioridade, EDF, Pontuação, SJF, etc).
 - **executavel/**: Scripts para empacotar a interface gráfica em um executável para Windows ou Linux.
-- **site/**: Interface web para simulação visual dos algoritmos, podendo ser aberta em qualquer navegador moderno.
 
 ## Como Executar o Simulador
 
